@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request
+from flask import Flask, request, render_template
 from datetime import datetime
 from dotenv import load_dotenv
 import psycopg2
@@ -14,19 +14,19 @@ DB_NAME = os.getenv("DB_NAME")
 
 app = Flask(__name__)
 
-@app.route('/', methods=['GET'])
+@app.route('/')
 def index():
-    return 200
+    return render_template("index.html"), 200
 
 
 @app.route('/crypto/', methods=['GET'])
 def get_price():
     symbols = ["BTC", "ETH", "ETC", "XRP", "BNB"]
     symbol = request.args.get('symbol', default=None, type=str)
-    year = request.args.get('year', default=datetime.today().year, type=str)
-    month = request.args.get('month', default=datetime.today().month, type=str)
-    date = request.args.get('date', default=datetime.today().day, type=str)
-    hour = request.args.get('hour', default=None, type=str)
+    year = request.args.get('year', default=datetime.today().year, type=int)
+    month = request.args.get('month', default=datetime.today().month, type=int)
+    date = request.args.get('date', default=datetime.today().day, type=int)
+    hour = request.args.get('hour', default=None, type=int)
     
     if symbol == None:
       return "No symbol given", 400
@@ -47,8 +47,8 @@ def get_price():
             "TakerBuyQuoteAssetVolume", "Ignore"]
     df = pd.DataFrame(df, columns=cols)
     dt = datetime(year, month, date, hour, 0)
-    df[df['OpenTime'] == dt]
-    return df["Open"]
+    df[df["OpenTime"] == dt]
+    return {"Open" : df[df["OpenTime"] == dt]["Open"].values[0]}, 200
 
 
 if __name__ == '__main__':
